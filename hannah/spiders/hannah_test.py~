@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+import scrapy
+import locale
+from datetime import datetime
+loc= locale.setlocale(locale.LC_ALL,("de_DE"))
+
+class HannahSpider(scrapy.Spider):
+    name = 'hannah_v1'
+    allowed_domains = ['hannah-lastenrad.de']
+    start_urls_prefix = "https://www.hannah-lastenrad.de/cb-items/hannah-"
+    start_urls = []
+    for i in range(1,18):
+        start_url = ''.join([start_urls_prefix,str(i),'//'])
+        start_urls.append(start_url)
+    #start_urls = ['http://https://www.hannah-lastenrad.de//']
+
+    def parse(self, response):
+        print "URL: " + response.url
+        print(response.xpath('//li[contains(@class, "bookable")]//span/text()').extract())
+        bookable_dates_iterator = iter(response.xpath('//li[contains(@class, "bookable")]//span/text()').extract())
+        bookable_dates = [c.zfill(3) +next(bookable_dates_iterator,'') for c in bookable_dates_iterator]
+        print(list(bookable_dates))
+        location_timeframend = [x[-8:] for x in response.xpath("//span[@class='cb-date']/text()").extract()]
+     
+        yield {
+        'hannah_name': response.xpath('//h1/text()').extract_first(),
+        'location_names': [x.strip() for x in response.xpath("//div[@class='cb-location-name cb-big']/text()").extract()],
+        'location_gmaps_links': [x.strip() for x in response.xpath("//div[@class='cb-address cb-row']/a/@href").extract()],
+        'location_timeframe': [datetime.strptime(t,'%d.%m.%y') for t in [x.strip() for x in location_timeframend]],
+        'bookable_dates': [datetime.strptime(''.join([t,'2017']),'%d.%b %Y') for t in bookable_dates]
+        }
+        pass
+        
+        #[datetime.strptime(t, '%d.%m.%Y') for t in 
