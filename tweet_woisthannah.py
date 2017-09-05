@@ -6,10 +6,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
 #twitter credential (move later)
-api = twitter.Api(consumer_key='uICny9VJBL5DSfpzjHJm9KZCD',
-consumer_secret='VbzFdRm9NFnZFr8gsZvJj9IxUxtEZKgHWrIydW2eS8KDXPwTgm',
-access_token_key='897347354554245120-ZrHM1Ksk0zg98z3YyagMVTfLINvPT5A',
-access_token_secret='9SddyewS21DBmsUdsfIwlTzzDrTrZrIdut1Bct1HgSbKd')
+execfile("twitter_cr3d3nt1als.py")
 
 #date
 
@@ -67,7 +64,7 @@ else:
         status_text = "".join(["Schnapp dir ein #Lastenrad von ",str(len(next_bookable_hannahs))," in #Hannover wieder ab ",datetime.strftime(nearest_date(earliest_bookable_dates),'%d.%m'),":"]+next_bookable_hannahs+[" https://www.hannah-lastenrad.de"])
 print(status_text)
 status = api.PostUpdate(status_text)
-print(status.text)
+#print(status.text)
 
 #empty jl-file
 
