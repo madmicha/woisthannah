@@ -1,34 +1,40 @@
-import twitter 
-import json 
-import time 
-from datetime import datetime, timedelta 
-from scrapy.crawler import CrawlerProcess 
-from scrapy.utils.project import get_project_settings
+import json
+import epd1in54
+import time
+import Image
+import ImageDraw
+import ImageFont
+from datetime import datetime, timedelta
 
-#twitter credential (move later)
-execfile("twitter_cr3d3nt1als.py")
 
 #date
 
 #nearest date
 def nearest_date(items):
     return min(items, key=lambda x: abs(x - datetime.today()))
-print(api.VerifyCredentials())
 
-#crawl
+def epdisplay(date,names,locations):
+    header = date +": "+ str(len(names)) + " frei"
+    epd = epd1in54.EPD()
+    epd.init(epd.lut_full_update)
+# For simplicity, the arguments are explicit numerical coordinates
+    image = Image.new('1', (epd1in54.EPD_WIDTH, epd1in54.EPD_HEIGHT), 255)  # 255: clear the frame
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 12)
+    draw.rectangle((0, 10, 200, 34), fill = 0)
+    draw.text((8, 12), header, font = font, fill = 255)
+    line_offset = 36
+    for name,location in zip(names,locations):
+        
+        line = "".join([name,": ",location])
+        draw.text((8, line_offset), line, font = font, fill = 0)
+        line_offset += 15
+    
+    epd.clear_frame_memory(0xFF)
+    epd.set_frame_memory(image, 0, 0)
+    epd.display_frame()
 
-
-settings = get_project_settings()
-settings.overrides['FEED_FORMAT'] = 'jsonlines'
-settings.overrides['FEED_URI'] = 'hannah_bookable_dates.jl'
-
-process = CrawlerProcess(settings)
-
-# 'followall' is the name of one of the spiders of the project.
-process.crawl('hannah_v1', domain='hannah-lastenrad.de')
-process.start() # the script will block here until the crawling is finished
-
-time.sleep(1)
+    epd.delay_ms(2000)
 
 #load jsonlines
 hannah_data = []
@@ -37,29 +43,33 @@ not_bookable_hannahs = []
 
 with open('hannah_bookable_dates.jl', 'r') as f:
     for line in f:
-        print(line)
         if json.loads(line)['bookable_dates'] != []:
             earliest_bookable_dates.append(datetime.strptime(json.loads(line)['bookable_dates'][0],'%Y-%m-%d %H:%M:%S'))
         else:
             not_bookable_hannahs.append(json.loads(line)['hannah_name'])
         hannah_data.append(json.loads(line))
 #        
-with open('hannah_bookable_dates.jl', 'w'): pass	
-print(earliest_bookable_dates)
-print(not_bookable_hannahs)
+#with open('hannah_bookable_dates.jl', 'w'): pass	
+#print(earliest_bookable_dates)
+
 next_bookable_hannahs =[]
+next_bookable_hannahs_loc =[]
+wann = None
 for line in hannah_data:
 	if line['bookable_dates'] == []:
 	    pass
 	else:
 	    if datetime.strptime(line['bookable_dates'][0],'%Y-%m-%d %H:%M:%S')==nearest_date(earliest_bookable_dates):
-	        next_bookable_hannahs.append("".join([" #",line['hannah_name'].replace(" ","")]))
+	        next_bookable_hannahs.append(line['hannah_name'])
+	        next_bookable_hannahs_loc.append("-".join(line['location_names']))
 if nearest_date(earliest_bookable_dates).date() == datetime.today().date():
+    wann = "Heute"
     if len(next_bookable_hannahs)==1:
         status_text = "".join(["Heute gibt es noch ein kostenloses #Lastenrad in #Hannover"]+next_bookable_hannahs+[' https://www.hannah-lastenrad.de/cb-items/hannah-',next_bookable_hannahs[0].split('nnah')[1]])
     else:
         status_text = "".join(["Heute sind ",str(len(next_bookable_hannahs))," #Lastenrad in #Hannover buchbar:"]+next_bookable_hannahs+[" https://www.hannah-lastenrad.de"])
 else:
+    wann = datetime.strftime(nearest_date(earliest_bookable_dates),'%d.%m.%y')
     if len(next_bookable_hannahs)==1:
         status_text = "".join(["Ein kostenloses #Lastenrad gibt es wieder am ",datetime.strftime(nearest_date(earliest_bookable_dates),'%d.%m.%y')," in #Hannover:"]+next_bookable_hannahs+[' https://www.hannah-lastenrad.de/cb-items/hannah-',next_bookable_hannahs[0].split('annah')[1]])
     else:
@@ -69,8 +79,8 @@ print(status_text)
 #message_text = "".join(["Tweetbot sagt Guten Morgen am ",datetime.strftime(datetime.today(),"%d.%m.%.y"),status_text])
 #message = api.PostDirectMessage(u'madmicha',message_text)
 #Post Status
-status = api.PostUpdate(status_text)
-print(status.text)
+#status = api.PostUpdate(status_text)
+epdisplay(wann,next_bookable_hannahs,next_bookable_hannahs_loc)
 
 #empty jl-file
-
+with open('hannah_bookable_dates.jl', 'w'): pass
