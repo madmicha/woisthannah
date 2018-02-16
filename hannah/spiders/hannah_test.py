@@ -11,16 +11,16 @@ from dateutil.relativedelta import relativedelta
 
 def parse_future(timestr, **parse_kwargs):
     """Same as dateutil.parser.parse() but only returns future dates."""
-    now = datetime.now()
+    now = datetime.now().date()
     try:
-        dt = parser.parse(timestr, parserinfo=GermanParserInfo(), **parse_kwargs)
+        dt = parser.parse(timestr, parserinfo=GermanParserInfo(), **parse_kwargs).date()
     except ValueError:
         pass
-    if dt > now: # original date is in future
+    if dt >= now: # original date is TODAY OR  in future
         pass
     else:
         dt += relativedelta(years=+1)
-    if dt > now: # future date is one year later
+    if dt >= now: # future date is in next year
         pass
     else:
         print("No Future date found")
@@ -37,6 +37,7 @@ class HannahSpider(scrapy.Spider):
     allowed_domains = ['hannah-lastenrad.de']
     start_urls_prefix = "https://www.hannah-lastenrad.de/cb-items/hannah-"
     start_urls = []
+    hannah_ids = range(1,19) + [21]
     for i in range(1,19):
         start_url = ''.join([start_urls_prefix,str(i),'//'])
         start_urls.append(start_url)

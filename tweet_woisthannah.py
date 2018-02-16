@@ -41,7 +41,7 @@ with open('hannah_bookable_dates.jl', 'r') as f:
     for line in f:
         print(line)
         if json.loads(line)['bookable_dates'] != []:
-            earliest_bookable_dates.append(datetime.strptime(json.loads(line)['bookable_dates'][0],'%Y-%m-%d %H:%M:%S'))
+            earliest_bookable_dates.append(datetime.strptime(json.loads(line)['bookable_dates'][0],"%Y-%m-%d"))
         else:
             not_bookable_hannahs.append(json.loads(line)['hannah_name'])
         hannah_data.append(json.loads(line))
@@ -56,7 +56,7 @@ for line in hannah_data:
 	if line['bookable_dates'] == []:
 	    pass
 	else:
-	    if datetime.strptime(line['bookable_dates'][0],'%Y-%m-%d %H:%M:%S')==nearest_date(earliest_bookable_dates):
+	    if datetime.strptime(line['bookable_dates'][0],"%Y-%m-%d").date()==nearest_date(earliest_bookable_dates).date():
 	        next_bookable_hannahs.append("".join([" #",line['hannah_name'].replace(" ","")]))
 if nearest_date(earliest_bookable_dates).date() == datetime.today().date():
     if len(next_bookable_hannahs)==1:
